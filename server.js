@@ -78,7 +78,21 @@ app.put('/shopping-list/:id', jsonParser, (req, res) => {
 });
 
 
-app.put('/recipes/:id', jsonParser, (req, res) => {
+// when DELETE request comes in with an id in path,
+// try to delete that item from ShoppingList.
+app.delete('/shopping-list/:id', (req, res) => {
+  ShoppingList.delete(req.params.id);
+  console.log(`Deleted shopping list item \`${req.params.ID}\``);
+  res.status(204).end();
+});
+
+
+app.get('/recipes', (req, res) => {
+  res.json(Recipes.get());
+});
+
+
+app.put('/recipes/:id', jsonParser, (req, res, next) => {
   const requiredFields = ['name', 'ingredients', 'id'];
   for (let i=0; i<requiredFields.length; i++) {
     const field = requiredFields[i];
@@ -95,25 +109,21 @@ app.put('/recipes/:id', jsonParser, (req, res) => {
     return res.status(400).send(message);
   }
   console.log(`Updating recipes item \`${req.params.id}\``);
-  Recipes.update({
-    id: req.params.id,
-    name: req.body.name,
-    ingredients: req.body.ingredients
-  });
-  res.status(204).end();
-});
+  
 
-// when DELETE request comes in with an id in path,
-// try to delete that item from ShoppingList.
-app.delete('/shopping-list/:id', (req, res) => {
-  ShoppingList.delete(req.params.id);
-  console.log(`Deleted shopping list item \`${req.params.ID}\``);
-  res.status(204).end();
-});
+  try {
+    Recipes.update({
+       id: req.params.id,
+       name: req.body.name,
+       ingredients: req.body.ingredients
+     });
+     res.status(204).end();
 
-
-app.get('/recipes', (req, res) => {
-  res.json(Recipes.get());
+  }
+  catch (e) {
+    return next(e)
+  }
+    
 });
 
 app.post('/recipes', jsonParser, (req, res) => {
@@ -136,6 +146,25 @@ app.delete('/recipes/:id', (req, res) => {
   console.log(`Deleted recipe \`${req.params.ID}\``);
   res.status(204).end();
 });
+
+app.use( function (error, req, res, next)  {
+  console.log('middleware error handler 1');
+  next(error);
+})
+
+app.use( function (error, req, res, next) {
+  console.log('middleware error handler 2');
+  next(error);
+
+})
+app.use( function (error, req, res, next) {
+  console.log('middleware error handler 3');
+  next(error);
+})
+
+app.use( function (error, req, res, next)  {
+  res.status(500).send();
+})
 
 app.listen(process.env.PORT || 8080, () => {
   console.log(`Your app is listening on port ${process.env.PORT || 8080}`);
